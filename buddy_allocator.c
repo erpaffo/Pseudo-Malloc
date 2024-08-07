@@ -94,7 +94,7 @@ int BuddyAllocator_init(BuddyAllocator* alloc,
       return -1;
     }
     // initialization
-    BitMap_init(&(alloc->bitmap), num_bits, bitmap_buffer);
+    BitMap_init(&(alloc->bitmap), num_bits, (uint8_t*)bitmap_buffer);
     printf("Buddy Allocator Created\nLevels: %d\nMemory Size: %d\nNumber of bits in the bitmap: %d\nBitmap size: %d\nMinimum Bucket Size: %d\n", num_levels, memory_size, num_bits, BitMap_getBytes(num_bits), min_bucket_size);
     return 0;
 }
