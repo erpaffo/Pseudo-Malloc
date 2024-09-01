@@ -4,6 +4,7 @@
 #include <sys/mman.h>
 #include <errno.h>
 #include <string.h>
+#include <bits/mman-linux.h>
 
 void* pseudo_malloc(BuddyAllocator* alloc, int size) {
     if (size < 0) {

@@ -11,148 +11,135 @@ char memory[MEMORY_SIZE];
 
 BuddyAllocator alloc;
 
+typedef struct {
+    int total_tests;
+    int passed_tests;
+    int failed_tests;
+} TestSummary;
+
+TestSummary summary = {0, 0, 0};
+
+void print_allocation_result(void* ptr, int size, int expected_failure) {
+    summary.total_tests++;
+    if ((ptr != NULL && !expected_failure) || (ptr == NULL && expected_failure)) {
+        summary.passed_tests++;
+        printf("[SUCCESS] %s %d bytes %s\n", expected_failure ? "Failed to allocate" : "Allocated", size, ptr ? "" : "(expected failure)");
+    } else {
+        summary.failed_tests++;
+        printf("[ERROR] %s %d bytes at address %p\n", expected_failure ? "Unexpectedly allocated" : "Failed to allocate", size, ptr);
+    }
+}
+
+void print_free_result(void* ptr, int size) {
+    if (ptr != NULL) {
+        printf("[INFO] Freed %d bytes from address %p\n", size, ptr);
+    } else {
+        printf("[WARNING] Attempted to free a NULL pointer\n");
+    }
+}
+
 void test_small_allocations() {
-    printf("\nRunning small allocation tests...\n");
+    printf("\n== Running small allocation tests ==\n");
 
-    // Allocate small memory blocks
     void* p1 = BuddyAllocator_malloc(&alloc, 100);
+    print_allocation_result(p1, 100, 0);
+
     void* p2 = BuddyAllocator_malloc(&alloc, 200);
+    print_allocation_result(p2, 200, 0);
+
     void* p3 = BuddyAllocator_malloc(&alloc, 300);
+    print_allocation_result(p3, 300, 0);
 
-    // Verify allocations
-    if (p1 != NULL) {
-        printf("Allocated 100 bytes at %p\n", p1);
-    } else {
-        printf("Failed to allocate 100 bytes\n");
-    }
-
-    if (p2 != NULL) {
-        printf("Allocated 200 bytes at %p\n", p2);
-    } else {
-        printf("Failed to allocate 200 bytes\n");
-    }
-
-    if (p3 != NULL) {
-        printf("Allocated 300 bytes at %p\n", p3);
-    } else {
-        printf("Failed to allocate 300 bytes\n");
-    }
-
-    // Free allocated memory
     BuddyAllocator_free(&alloc, p1);
-    BuddyAllocator_free(&alloc, p2);
-    BuddyAllocator_free(&alloc, p3);
+    print_free_result(p1, 100);
 
-    printf("Small allocation tests completed.\n");
+    BuddyAllocator_free(&alloc, p2);
+    print_free_result(p2, 200);
+
+    BuddyAllocator_free(&alloc, p3);
+    print_free_result(p3, 300);
+
+    printf("== Small allocation tests completed ==\n");
 }
 
 void test_large_allocations() {
-    printf("\nRunning large allocation tests...\n");
+    printf("\n== Running large allocation tests ==\n");
 
-    // Allocate large memory blocks
     void* p1 = BuddyAllocator_malloc(&alloc, 2000);
+    print_allocation_result(p1, 2000, 0);
+
     void* p2 = BuddyAllocator_malloc(&alloc, 3000);
+    print_allocation_result(p2, 3000, 0);
+
     void* p3 = BuddyAllocator_malloc(&alloc, 5000);
+    print_allocation_result(p3, 5000, 0);
 
-    // Verify allocations
-    if (p1 != NULL) {
-        printf("Allocated 2000 bytes at %p\n", p1);
-    } else {
-        printf("Failed to allocate 2000 bytes\n");
-    }
-
-    if (p2 != NULL) {
-        printf("Allocated 3000 bytes at %p\n", p2);
-    } else {
-        printf("Failed to allocate 3000 bytes\n");
-    }
-
-    if (p3 != NULL) {
-        printf("Allocated 5000 bytes at %p\n", p3);
-    } else {
-        printf("Failed to allocate 5000 bytes\n");
-    }
-
-    // Free allocated memory
     BuddyAllocator_free(&alloc, p1);
-    BuddyAllocator_free(&alloc, p2);
-    BuddyAllocator_free(&alloc, p3);
+    print_free_result(p1, 2000);
 
-    printf("Large allocation tests completed.\n");
+    BuddyAllocator_free(&alloc, p2);
+    print_free_result(p2, 3000);
+
+    BuddyAllocator_free(&alloc, p3);
+    print_free_result(p3, 5000);
+
+    printf("== Large allocation tests completed ==\n");
 }
 
 void test_edge_cases() {
-    printf("\nRunning edge case tests...\n");
+    printf("\n== Running edge case tests ==\n");
 
-    // Allocate zero bytes (should fail)
     void* p1 = BuddyAllocator_malloc(&alloc, 0);
-    if (p1 == NULL) {
-        printf("Correctly failed to allocate 0 bytes\n");
-    } else {
-        printf("Unexpectedly allocated 0 bytes at %p\n", p1);
-        BuddyAllocator_free(&alloc, p1);
-    }
+    print_allocation_result(p1, 0, 1); // Expected to fail
 
-    // Allocate negative bytes (should fail)
     void* p2 = BuddyAllocator_malloc(&alloc, -100);
-    if (p2 == NULL) {
-        printf("Correctly failed to allocate -100 bytes\n");
-    } else {
-        printf("Unexpectedly allocated -100 bytes at %p\n", p2);
-        BuddyAllocator_free(&alloc, p2);
-    }
+    print_allocation_result(p2, -100, 1); // Expected to fail
 
-    printf("Edge case tests completed.\n");
+    printf("== Edge case tests completed ==\n");
 }
 
 void test_combined_allocations() {
-    printf("\nRunning combined allocation tests...\n");
+    printf("\n== Running combined allocation tests ==\n");
 
-    // Allocate a mix of small and large memory blocks
     void* p1 = BuddyAllocator_malloc(&alloc, 100);    // Small
+    print_allocation_result(p1, 100, 0);
+
     void* p2 = BuddyAllocator_malloc(&alloc, 2000);   // Large
+    print_allocation_result(p2, 2000, 0);
+
     void* p3 = BuddyAllocator_malloc(&alloc, 300);    // Small
+    print_allocation_result(p3, 300, 0);
+
     void* p4 = BuddyAllocator_malloc(&alloc, 5000);   // Large
+    print_allocation_result(p4, 5000, 0);
 
-    // Verify allocations
-    if (p1 != NULL) {
-        printf("Allocated 100 bytes at %p\n", p1);
-    } else {
-        printf("Failed to allocate 100 bytes\n");
-    }
-
-    if (p2 != NULL) {
-        printf("Allocated 2000 bytes at %p\n", p2);
-    } else {
-        printf("Failed to allocate 2000 bytes\n");
-    }
-
-    if (p3 != NULL) {
-        printf("Allocated 300 bytes at %p\n", p3);
-    } else {
-        printf("Failed to allocate 300 bytes\n");
-    }
-
-    if (p4 != NULL) {
-        printf("Allocated 5000 bytes at %p\n", p4);
-    } else {
-        printf("Failed to allocate 5000 bytes\n");
-    }
-
-    // Free allocated memory
     BuddyAllocator_free(&alloc, p1);
-    BuddyAllocator_free(&alloc, p2);
-    BuddyAllocator_free(&alloc, p3);
-    BuddyAllocator_free(&alloc, p4);
+    print_free_result(p1, 100);
 
-    printf("Combined allocation tests completed.\n");
+    BuddyAllocator_free(&alloc, p2);
+    print_free_result(p2, 2000);
+
+    BuddyAllocator_free(&alloc, p3);
+    print_free_result(p3, 300);
+
+    BuddyAllocator_free(&alloc, p4);
+    print_free_result(p4, 5000);
+
+    printf("== Combined allocation tests completed ==\n");
+}
+
+void print_final_summary() {
+    printf("\n========== TEST SUMMARY ==========\n");
+    printf("Total tests run: %d\n", summary.total_tests);
+    printf("Passed tests: %d\n", summary.passed_tests);
+    printf("Failed tests: %d\n", summary.failed_tests);
+    printf("==================================\n");
 }
 
 int main(int argc, char** argv) {
-    // Initialize the buddy allocator
-    printf("init... ");
+    printf("Initializing Buddy Allocator... ");
     if (BuddyAllocator_init(&alloc, BUDDY_LEVELS, memory, MEMORY_SIZE, buffer, BUFFER_SIZE, MIN_BUCKET_SIZE) != 0) {
-        printf("Failed to initialize Buddy Allocator\n");
+        printf("[FATAL] Failed to initialize Buddy Allocator\n");
         return -1;
     }
     printf("DONE\n");
@@ -162,6 +149,9 @@ int main(int argc, char** argv) {
     test_large_allocations();
     test_edge_cases();
     test_combined_allocations();
+
+    // Print final results
+    print_final_summary();
 
     return 0;
 }
